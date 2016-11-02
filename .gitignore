@@ -1,3 +1,4 @@
 *.pyc
-
+*.fmap
 /drew/txt
+/ysc/results
