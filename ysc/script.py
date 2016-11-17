@@ -48,9 +48,11 @@ def mat_to_pandas(path):
 
 
 def create_simple_csv():
+    """
+    """
     # TRAIN
     print('Create train.csv...')
-    files = sorted(glob.glob("../features/train_*/*.mat"))
+    files = sorted(glob.glob("../data/Features/train_*_new/*.mat"))
     out = open("simple_train.csv", "w")
     out.write("Id,patient_id")
     for i in range(512):
@@ -68,25 +70,24 @@ def create_simple_csv():
         out.write(str(new_id))
         out.write("," + str(pid))
         for f in sorted(list(tables.columns.values)):
-            mean = tables[f].mean()
+            mean = tables[f].mean(skipna=True)
             out.write("," + str(mean))
         out.write("," + str(os.path.getsize(fl)))
         out.write("," + str(result) + "\n")
         # break
     out.close()
-
     # TEST
     print('Create test.csv...')
-    files = sorted(glob.glob("../features/test_*/*.mat"))
+    files = sorted(glob.glob("../data/Features/test_*/*.mat"))
     out = open("simple_test.csv", "w")
     out.write("Id,patient_id")
-    for i in range(16):
+    for i in range(512):
         out.write(",avg_" + str(i))
     out.write(",file_size\n")
     for fl in files:
         # print('Go for ' + fl)
         id_str = os.path.basename(fl)[:-4]
-        pid, seq = map(int, id_str.split("_"))
+        pid, seq = map(int, id_str[4:].split("_"))
         new_id = pid * 100000 + seq
         try:
             tables = mat_to_pandas(fl)
@@ -94,7 +95,7 @@ def create_simple_csv():
             continue
         out.write(str(new_id))
         out.write("," + str(pid))
-        out.write("," + ','.join(map(str, tables.mean())))
+        out.write("," + ','.join(map(str, tables.mean(skipna=True))))
         out.write("," + str(os.path.getsize(fl)))
         out.write("\n")
         # break
@@ -190,6 +191,9 @@ def read_test_train():
     train = pd.read_csv("simple_train.csv")
     print("Load test.csv...")
     test = pd.read_csv("simple_test.csv")
+    # special edit for complex numbers
+    #cols_val = ["avg_%d" % x for x in range(512)]
+    #test.loc[519, cols_val] = test.loc[519, cols_val].apply(complex)
     print("Process tables...")
     features = get_features(train, test)
     return train, test, features
